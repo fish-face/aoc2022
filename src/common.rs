@@ -1,7 +1,7 @@
 use std::env;
 use std::fmt::Debug;
 use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, Read};
 use std::str::FromStr;
 
 use anyhow::Result;
@@ -10,6 +10,14 @@ pub fn read_input_lines() -> Result<impl Iterator<Item = String>> {
     Ok(read_file_lines(env::args().nth(1).expect("No input supplied!"))?.filter_map(
         |line| line.ok()
     ))
+}
+
+pub fn read_input() -> Result<String> {
+    let path = env::args().nth(1).expect("No input supplied!");
+    let mut file = File::open(path)?;
+    let mut input = String::new();
+    file.read_to_string(&mut input)?;
+    Ok(input)
 }
 
 pub fn parse_input_lines<T>() -> Result<impl Iterator<Item = T>>

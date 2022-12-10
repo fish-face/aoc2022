@@ -1,4 +1,5 @@
 use core::ops::Add;
+use std::fmt::{Display, Formatter};
 use std::ops::{Mul, Sub};
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Default, Debug)]
@@ -15,28 +16,34 @@ pub struct Coord<T: Add> {
 // }
 //
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Default, Debug)]
-pub struct TCoord<T: Add> (pub T, pub T);
+pub struct Pt<T> (pub T, pub T);
 
-impl<T: Add<Output = T>> Add for TCoord<T> {
-    type Output = TCoord<T::Output>;
+impl<T: Display> Display for Pt<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({}, {})", self.0, self.1)
+    }
+}
+
+impl<T: Add<Output = T>> Add for Pt<T> {
+    type Output = Pt<T::Output>;
 
     fn add(self, other: Self) -> Self::Output
     {
-        TCoord(self.0 + other.0, self.1 + other.1)
+        Pt(self.0 + other.0, self.1 + other.1)
     }
 }
 
-impl<T: Sub<Output = T> + Add<Output = T>> Sub for TCoord<T> {
-    type Output = TCoord<T>;
+impl<T: Sub<Output = T> + Add<Output = T>> Sub for Pt<T> {
+    type Output = Pt<T>;
 
     fn sub(self, other: Self) -> Self::Output
     {
-        TCoord(self.0 - other.0, self.1 - other.1)
+        Pt(self.0 - other.0, self.1 - other.1)
     }
 }
 
-impl<T: Mul<Output = T> + Add + Copy> TCoord<T> {
+impl<T: Mul<Output = T> + Add + Copy> Pt<T> {
     pub fn scale(self, by: T) -> Self {
-        TCoord(by * self.0, by * self.1)
+        Pt(by * self.0, by * self.1)
     }
 }

@@ -1,6 +1,7 @@
 // use std::iter::{repeat, zip};
 use anyhow::{Result};
 use thiserror::Error;
+use crate::coord::Pt;
 // use crate::coord::Coord;
 
 #[derive(Debug)]
@@ -35,6 +36,11 @@ impl<T> Grid<T> {
         Ok(&self.data[x + y * self.width])
     }
 
+    pub fn at_pt(&self, p: Pt<usize>) -> Result<&T, GridErr> {
+        let Pt(x, y) = p;
+        self.at(x, y)
+    }
+
     pub fn at_mut(&mut self, x: usize, y: usize) -> Result<&mut T, GridErr> {
         if x >= self.width || y >= self.height {
             return Err(GridErr::IndexError);
@@ -60,6 +66,11 @@ impl<T> Grid<T> {
 
     pub fn rows_mut(&mut self) -> impl Iterator<Item = &mut [T]> {
         self.data.as_mut_slice().chunks_exact_mut(self.width)
+    }
+
+    pub fn map<S>(&self, f: fn(&T) -> S) -> Grid<S>
+    {
+        Grid::from_data(self.width, self.height, self.data.iter().map(f).collect::<Vec<_>>())
     }
 
     // pub fn indices_by_row(&self) -> impl DoubleEndedIterator<Item = impl DoubleEndedIterator<Item = Coord<usize>>> {

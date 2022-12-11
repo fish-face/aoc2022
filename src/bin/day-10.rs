@@ -1,5 +1,6 @@
 use aoc2022::common::read_input_lines;
 use peg::parser;
+use aoc2022::coord::Pt;
 use aoc2022::grid::Grid;
 
 #[derive(Debug)]
@@ -48,7 +49,7 @@ fn main() {
 
             // Do part 2
             if (reg - col).abs() <= 1 {
-                screen.set(col as usize, row as usize, 1).unwrap();
+                screen[Pt(col as usize, row as usize)] = 1;
             }
 
             if i == cycles - 1 {

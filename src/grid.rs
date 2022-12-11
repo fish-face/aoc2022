@@ -1,3 +1,4 @@
+use std::ops::{Index, IndexMut};
 // use std::iter::{repeat, zip};
 use anyhow::{Result};
 use thiserror::Error;
@@ -29,35 +30,17 @@ impl<T> Grid<T> {
         p
     }
 
-    pub fn at(&self, x: usize, y: usize) -> Result<&T, GridErr> {
-        if x >= self.width || y >= self.height {
-            return Err(GridErr::IndexError);
-        }
-        Ok(&self.data[x + y * self.width])
-    }
-
-    pub fn at_pt(&self, p: Pt<usize>) -> Result<&T, GridErr> {
-        let Pt(x, y) = p;
-        self.at(x, y)
-    }
-
-    pub fn at_mut(&mut self, x: usize, y: usize) -> Result<&mut T, GridErr> {
-        if x >= self.width || y >= self.height {
-            return Err(GridErr::IndexError);
-        }
-        Ok(&mut self.data[x + y * self.width])
-    }
-
-    pub fn set(&mut self, x: usize, y: usize, val: T) -> Result<(), GridErr>{
-        if x >= self.width || y >= self.height {
-            return Err(GridErr::IndexError);
-        }
-        self.data[x + y * self.width] = val;
-        Ok(())
-    }
-
     pub fn iter(&self) -> impl Iterator<Item = &T> {
         self.data.iter()
+    }
+
+    pub fn get(&self, index: Pt<usize>) -> Result<&T, GridErr> {
+        let Pt(x, y) = index;
+        if x >= self.width || y >= self.height {
+            Err(GridErr::IndexError)
+        } else {
+            Ok(&self[index])
+        }
     }
 
     pub fn rows(&self) -> impl Iterator<Item = &[T]> {
@@ -106,6 +89,28 @@ impl<T> Grid<T> {
                 .collect::<Vec<_>>()
                 .join(sep)
             ).collect::<Vec<_>>().join("\n")
+    }
+}
+
+impl<T> Index<Pt<usize>> for Grid<T> {
+    type Output = T;
+
+    fn index(&self, index: Pt<usize>) -> &Self::Output {
+        let Pt(x, y) = index;
+        if x >= self.width || y >= self.height {
+            panic!("{} is out of bounds for {}x{} Grid", index, self.width, self.height);
+        }
+        &self.data[x + y * self.width]
+    }
+}
+
+impl<T> IndexMut<Pt<usize>> for Grid<T> {
+    fn index_mut(&mut self, index: Pt<usize>) -> &mut Self::Output {
+        let Pt(x, y) = index;
+        if x >= self.width || y >= self.height {
+            panic!("{} is out of bounds for {}x{} Grid", index, self.width, self.height);
+        }
+        &mut self.data[x + y * self.width]
     }
 }
 

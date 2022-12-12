@@ -34,6 +34,12 @@ impl<T> Grid<T> {
         self.data.iter()
     }
 
+    pub fn enumerate(&self) -> impl Iterator<Item = (Pt<usize>, &T)> {
+        self.data.iter().enumerate().map(
+            |(i, x)| (Pt(i % self.width, i / self.width), x)
+        )
+    }
+
     pub fn get(&self, index: Pt<usize>) -> Result<&T, GridErr> {
         let Pt(x, y) = index;
         if x >= self.width || y >= self.height {
@@ -41,6 +47,11 @@ impl<T> Grid<T> {
         } else {
             Ok(&self[index])
         }
+    }
+
+    pub fn contains(&self, p: Pt<usize>) -> bool {
+        let Pt(x, y) = p;
+        x >= 0 && y >= 0 && x < self.width && y < self.height
     }
 
     pub fn rows(&self) -> impl Iterator<Item = &[T]> {
@@ -51,7 +62,7 @@ impl<T> Grid<T> {
         self.data.as_mut_slice().chunks_exact_mut(self.width)
     }
 
-    pub fn map<S>(&self, f: fn(&T) -> S) -> Grid<S>
+    pub fn map<S>(&self, f: impl FnMut(&T) -> S) -> Grid<S>
     {
         Grid::from_data(self.width, self.height, self.data.iter().map(f).collect::<Vec<_>>())
     }

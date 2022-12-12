@@ -3,19 +3,6 @@ use std::fmt::{Display, Formatter};
 use std::ops::{Mul, Sub};
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Default, Debug)]
-pub struct Coord<T: Add> {
-    pub x: T,
-    pub y: T,
-}
-
-// impl<T: Add> Coord<T> {
-//     pub fn add(&self, other: &Self) -> Coord<T>
-//     {
-//         Coord{x: self.x + other.x, y: self.y + other.y}
-//     }
-// }
-//
-#[derive(Copy, Clone, PartialEq, Eq, Hash, Default, Debug)]
 pub struct Pt<T> (pub T, pub T);
 
 impl<T: Display> Display for Pt<T> {
@@ -47,3 +34,50 @@ impl<T: Mul<Output = T> + Add + Copy> Pt<T> {
         Pt(by * self.0, by * self.1)
     }
 }
+
+impl Pt<isize> {
+    pub fn neighbours4(self) -> [Self; 4] {
+        let Pt(x, y) = self;
+        [
+            Pt(x - 1, y    ),
+            Pt(x + 1, y    ),
+            Pt(x    , y - 1),
+            Pt(x    , y + 1),
+        ]
+    }
+    pub fn neighbours8(self) -> [Self; 8] {
+        let Pt(x, y) = self;
+        [
+            Pt(x - 1, y - 1),
+            Pt(x    , y - 1),
+            Pt(x + 1, y - 1),
+            Pt(x - 1, y    ),
+
+            Pt(x + 1, y    ),
+            Pt(x - 1, y + 1),
+            Pt(x    , y + 1),
+            Pt(x + 1, y + 1),
+        ]
+    }
+}
+
+// impl<S, T> From<Pt<S>> for Pt<T>
+// where T: From<S>
+// {
+//     fn from(other: Pt<S>) -> Self {
+//         Pt(T::from(other.0), T::from(other.1))
+//     }
+// }
+// impl<T: RangeBounds<T>> RangeBounds<T> for Pt<T> {
+//     fn start_bound(&self) -> Bound<&T> {
+//         todo!()
+//     }
+//
+//     fn end_bound(&self) -> Bound<&T> {
+//         todo!()
+//     }
+//
+//     fn contains<U>(&self, item: &U) -> bool where T: PartialOrd<U>, U: ?Sized + PartialOrd<T> {
+//         todo!()
+//     }
+// }

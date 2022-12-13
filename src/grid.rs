@@ -51,7 +51,7 @@ impl<T> Grid<T> {
 
     pub fn contains(&self, p: Pt<usize>) -> bool {
         let Pt(x, y) = p;
-        x >= 0 && y >= 0 && x < self.width && y < self.height
+        x < self.width && y < self.height
     }
 
     pub fn rows(&self) -> impl Iterator<Item = &[T]> {

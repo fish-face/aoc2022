@@ -61,13 +61,20 @@ impl Pt<isize> {
     }
 }
 
-// impl<S, T> From<Pt<S>> for Pt<T>
-// where T: From<S>
-// {
-//     fn from(other: Pt<S>) -> Self {
-//         Pt(T::from(other.0), T::from(other.1))
-//     }
-// }
+// HAHAHA RUST
+impl From<Pt<isize>> for Pt<usize>
+{
+    fn from(other: Pt<isize>) -> Self {
+        Pt(other.0 as usize, other.1 as usize)
+    }
+}
+
+impl From<Pt<usize>> for Pt<isize>
+{
+    fn from(other: Pt<usize>) -> Self {
+        Pt(other.0 as isize, other.1 as isize)
+    }
+}
 // impl<T: RangeBounds<T>> RangeBounds<T> for Pt<T> {
 //     fn start_bound(&self) -> Bound<&T> {
 //         todo!()

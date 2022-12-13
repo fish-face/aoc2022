@@ -3,6 +3,7 @@ use aoc2022::coord::Pt;
 use aoc2022::grid::Grid;
 use petgraph::algo::dijkstra;
 use petgraph::{Directed, Graph};
+use petgraph::graph::NodeIndex;
 
 fn convert_ends(c: u8) -> u8 {
     match c as char {
@@ -14,36 +15,37 @@ fn convert_ends(c: u8) -> u8 {
 
 fn main() {
     let input: Vec<_> = read_input_lines().expect("Could not read input").collect();
-    let grid: Grid<u8> = Grid::from_data(
+    let mut graph = Graph::<(), (), Directed>::new();
+
+    // Create graph nodes and store their indices somewhere
+    let grid: Grid<(u8, NodeIndex)> = Grid::from_data(
         input[0].len(),
         input.len(),
-        input.join("").bytes().map(|x| x).collect::<Vec<_>>(),
+        input
+            .join("")
+            .bytes()
+            .map(|x| (x, graph.add_node(())))
+            .collect::<Vec<_>>(),
     );
 
     let mut start = None;
     let mut end = None;
-    let mut graph = Graph::<u8, (), Directed>::new();
-
-    // Create graph nodes and store their indices somewhere
-    let graph_grid = grid.map(|v: &u8| graph.add_node(*v));
     // Create graph edges, and also search for the start and end
-    for (p, i) in graph_grid.enumerate() {
-        let mut v = grid[p];
-        if v == 'E' as u8 {
+    for (p, (v, i)) in grid.enumerate() {
+        // let mut v = grid[p];
+        if *v == 'E' as u8 {
             end = Some(i);
-        } else if v == 'S' as u8 {
+        } else if *v == 'S' as u8 {
             start = Some(i);
         }
-        v = convert_ends(v);
-        // AHAHAHAHA I LOVE RUST
-        let p_isize = Pt(p.0 as isize, p.1 as isize);
+        let v = convert_ends(*v);
+        let p_isize = Pt::<isize>::from(p);
         for neighbour in p_isize.neighbours4() {
             if neighbour.0 < 0 || neighbour.1 < 0 {
                 continue;
             }
-            // AHAHAHAHA I LOVE RUST
-            let neighbour = Pt(neighbour.0 as usize, neighbour.1 as usize);
-            if let (Ok(u), Ok(j)) = (grid.get(neighbour), graph_grid.get(neighbour)) {
+            let neighbour = Pt::<usize>::from(neighbour);
+            if let Ok((u, j)) = grid.get(neighbour) {
                 let u = convert_ends(*u);
                 // This condition is backwards because for part2 we have to search from the goal to several different places
                 if u + 1 >= v {
@@ -60,8 +62,8 @@ fn main() {
     println!(
         "{:?}",
         grid.enumerate()
-            .filter(|(_, v)| **v == 'a' as u8)
-            .map(|(p, _)| dijkstra_map.get(&graph_grid[p]).unwrap_or(&9001))
+            .filter(|(_, (v, _))| *v == 'a' as u8)
+            .map(|(p, _)| dijkstra_map.get(&grid[p].1).unwrap_or(&9001))
             .min()
             .expect("No route found")
     );

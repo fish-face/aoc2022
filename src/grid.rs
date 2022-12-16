@@ -5,7 +5,7 @@ use thiserror::Error;
 use crate::coord::Pt;
 // use crate::coord::Coord;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Grid<T> {
     pub width: usize,
     pub height: usize,

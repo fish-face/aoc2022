@@ -5,7 +5,7 @@ use std::cmp::{max};
 #[derive(Debug, Clone)]
 pub struct Sensor {
     sensor: Pt<i64>,
-    beacon: Pt<i64>,
+    beacon_dist: i64,
 }
 
 peg::parser! {
@@ -14,7 +14,7 @@ peg::parser! {
             = v:(line() ** "\n") "\n"? {v}
         rule line() -> Sensor
             = "Sensor at x=" xs:num() ", y=" ys:num() ": closest beacon is at x=" xb:num() ", y=" yb:num() {
-            Sensor{sensor: Pt(xs, ys), beacon: Pt(xb, yb)}
+            Sensor{sensor: Pt(xs, ys), beacon_dist: (xs - xb).abs() + (ys - yb).abs()}
         }
         rule num() -> i64
             = n:$(['0'..='9' | '-']+) {? n.parse().or(Err("bad number"))}
@@ -27,29 +27,16 @@ enum Boundary {
     End(i64),
 }
 
-// Convert a single sensor on a given y coordinate to a range of X values within its range
-fn one(y: i64, s: &Sensor) -> Option<(Boundary, Boundary)> {
-    let dist = (s.sensor.0 - s.beacon.0).abs() + (s.sensor.1 - s.beacon.1).abs();
-    let ydist = (s.sensor.1 - y).abs();
-    let r = max(0, dist - ydist);
-    if r == 0 {
-        None
-    } else {
-        Some((
-            Boundary::Start(s.sensor.0 - r),
-            Boundary::End(s.sensor.0 + r),
-        ))
-    }
-}
-
-// Convert an iterator of sensors to a sorted vector of start and end boundaries
 fn boundaries<'a>(y: i64, max_x: i64, sensors: impl Iterator<Item = &'a Sensor>) -> Vec<Boundary> {
-    let mut boundaries = sensors
-        .map(|s| one(y, s))
-        .filter_map(|x| x)
-        .flat_map(|(a, b)| [a, b])
-        // .filter(|b| match b {Boundary::Start(x) | Boundary::End(x) => *x < max_x})
-        .collect::<Vec<_>>();
+    let mut boundaries = vec![];
+    for sensor in sensors {
+        let ydist = (sensor.sensor.1 - y).abs();
+        let r = sensor.beacon_dist - ydist;
+        if r > 0 {
+            boundaries.push(Boundary::Start(sensor.sensor.0 - r));
+            boundaries.push(Boundary::End(sensor.sensor.0 + r));
+        }
+    }
     boundaries.sort_by_key(|b| match b {
         Boundary::Start(x) | Boundary::End(x) => *x,
     });

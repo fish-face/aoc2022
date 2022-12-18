@@ -1,6 +1,6 @@
 use std::cmp::max;
 
-use aoc2022::common::{parse_input_lines, read_input_lines};
+use aoc2022::common::{read_input_lines};
 use aoc2022::coord::Pt;
 use aoc2022::grid::Grid;
 
@@ -34,7 +34,7 @@ fn pour(grid: &mut Grid<char>, floor: bool) -> bool {
     }
     let mut result = false;
     'outer: loop {
-        for offset in vec![Pt(0_isize, 1), Pt(-1, 1), Pt(1, 1)] {
+        for offset in [Pt(0_isize, 1), Pt(-1, 1), Pt(1, 1)] {
             // why even bother
             let test = Pt(
                 (pos.0 as isize + offset.0) as usize,

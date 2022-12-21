@@ -5,8 +5,11 @@ use std::cmp::{max, min};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::fmt::{Debug, Formatter};
 use std::rc::Rc;
+use array_init::array_init;
 
-type NodeID = i64;
+use bitvec::prelude::*;
+
+type NodeID = u8;
 
 #[derive(Clone)]
 pub struct Valve {
@@ -79,9 +82,8 @@ fn dijkstra_map(nodes: impl Iterator<Item = Rc<RefCell<Valve>>>) -> HashMap<(Str
     dist
 }
 
-type Valves = HashSet<NodeID>;
+type Valves = BitArr!(for 64);
 
-#[derive(Debug)]
 struct SearchState {
     at: NodeID,
     time: i64,
@@ -89,20 +91,23 @@ struct SearchState {
     active: Valves,
 }
 
+type NodeMap = Vec<(NodeID, i64)>;
+type Graph = [NodeMap; 64];
+
 fn part1(
-    map: &HashMap<NodeID, HashMap<NodeID, i64>>,
+    map: &Graph,
 ) {
-    println!("{}", bfs_from(map, 30, SearchState {at: 0, time: 0, pressure: 0, active: Valves::new()}, 0)) ;
+    println!("{}", bfs_from(map, 30, SearchState {at: 0, time: 0, pressure: 0, active: bitarr![0]}, 0)) ;
 }
 
 fn part2(
-    map: &HashMap<NodeID, HashMap<NodeID, i64>>,
+    map: &Graph
 ) {
-   println!("{}", bfs_from(map, 26, SearchState {at: 0, time: 0, pressure: 0, active: Valves::new()}, 1)) ;
+   println!("{}", bfs_from(map, 26, SearchState {at: 0, time: 0, pressure: 0, active: bitarr![0]}, 1)) ;
 }
 
 fn bfs_from(
-    map: &HashMap<NodeID, HashMap<NodeID, i64>>,
+    map: &Graph,
     max_time: i64,
     start_state: SearchState,
     remaining_agents: i64,
@@ -133,15 +138,15 @@ fn bfs_from(
         // }
 
         // move A
-        for (next, cost) in map[&cur.at].iter() {
+        for (next, cost) in map[cur.at as usize].iter() {
             let rate = *next;
-            if cur.time + cost + 1 <= max_time && !cur.active.contains(&rate) {
+            if cur.time + cost + 1 <= max_time && !cur.active.get(rate as usize).expect("Index OOB") {
                 let mut new_active_valves = cur.active.clone();
-                new_active_valves.insert(rate);
+                new_active_valves.set(rate as usize, true);
                 queue.push_back(SearchState {
                     at: *next,
                     time: cur.time + cost + 1,
-                    pressure: cur.pressure + rate * (max_time - cur.time - cost - 1),
+                    pressure: cur.pressure + rate as i64 * (max_time - cur.time - cost - 1),
                     active: new_active_valves,
                 })
             }
@@ -191,16 +196,13 @@ fn main() {
     });
     let dm = dijkstra_map(lookup.iter().map(|(_, value)| value).cloned());
     // Construct an adjacency map graph using the *rates* as IDs (they seem to be unique)
-    let mut dm_filtered = HashMap::<NodeID, HashMap<NodeID, i64>>::new();
+    let mut dm_filtered: Graph = array_init(|_| Vec::new());
     for ((from, to), cost) in dm {
-        let from_rate = RefCell::borrow(lookup[&from].borrow()).rate;
-        let to_rate = RefCell::borrow(lookup[&to].borrow()).rate;
+        let from_rate = RefCell::borrow(lookup[&from].borrow()).rate as NodeID;
+        let to_rate = RefCell::borrow(lookup[&to].borrow()).rate as NodeID;
         if to_rate > 0 && (from == "AA" || from_rate > 0)
         {
-            dm_filtered
-                .entry(from_rate)
-                .or_insert([].into())
-                .insert(to_rate, cost);
+            dm_filtered[from_rate as usize].push((to_rate, cost));
         }
     }
     part1(&dm_filtered);

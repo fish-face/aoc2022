@@ -1,3 +1,5 @@
+use std::cmp::max;
+use std::hash::{Hash, Hasher};
 use std::ops::{Index, IndexMut};
 // use std::iter::{repeat, zip};
 use anyhow::{Result};
@@ -5,7 +7,7 @@ use thiserror::Error;
 use crate::coord::Pt;
 // use crate::coord::Coord;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq)]
 pub struct Grid<T> {
     pub width: usize,
     pub height: usize,
@@ -60,6 +62,22 @@ impl<T> Grid<T> {
 
     pub fn rows_mut(&mut self) -> impl Iterator<Item = &mut [T]> {
         self.data.as_mut_slice().chunks_exact_mut(self.width)
+    }
+
+    pub fn subgrid(&self, top_left: Pt<usize>, bottom_right: Pt<usize>) -> Grid<T>
+    where T: Copy
+    {
+        let Pt(x1, y1) = top_left;
+        let Pt(x2, y2) = bottom_right;
+        let width = max(0, x2 - x1);
+        let height = max(0, y2 - y1);
+        let mut data = Vec::with_capacity(width * height);
+        for y in y1..y2 {
+            for x in x1..x2 {
+                data.push(self[Pt(x, y)]);
+            }
+        }
+        Grid::from_data(width, height, data)
     }
 
     pub fn map<S>(&self, f: impl FnMut(&T) -> S) -> Grid<S>
@@ -122,6 +140,18 @@ impl<T> IndexMut<Pt<usize>> for Grid<T> {
             panic!("{} is out of bounds for {}x{} Grid", index, self.width, self.height);
         }
         &mut self.data[x + y * self.width]
+    }
+}
+
+impl<T: PartialEq> PartialEq<Self> for Grid<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.width == other.width && self.data == other.data
+    }
+}
+
+impl<T: Hash> Hash for Grid<T> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.data.hash(state)
     }
 }
 
